@@ -1,0 +1,295 @@
+# This Dockerfile is to be run from its related Jenkinsfile.
+
+# PIPELINE_BUILD_NUMBER is defined in the Jenkinsfile. There is no override.
+
+# Use a specific version of Ubuntu for consistency
+# Alternative: Use the image built from 'DockerfileAgent'.
+# FROM custom-jenkins-inbound-agent
+FROM ubuntu:24.04
+
+USER root
+
+ENV WHODIS0b=$(whoami)
+RUN printf "whoami 0b: ${WHODIS0b}"
+
+# android\app\build.gradle                             <<< <<< <<<
+# ENV JAVA_VERSION="18"
+ENV JAVA_VERSION="17"
+
+# android\gradle.properties                            <<< <<< <<<
+ENV ANDROID_VERSION="34"
+ENV ANDROID_BUILD_TOOLS_VERSION="34.0.0"
+ENV ANDROID_ARCHITECTURE="x86_64"
+
+# Ruby
+# https://www.ruby-lang.org/en/downloads/releases/
+# ENV RUBY_VERSION="3.1.2"
+ENV RUBY_VERSION="3.3.6"
+
+# https://gradle.org/releases
+# android\gradle\wrapper\gradle-wrapper.properties     <<< <<< <<<
+# ENV GRADLE_VERSION=7.4.2
+ENV GRADLE_VERSION=8.8
+ENV GRADLE_HOME=/opt/gradle
+ENV GRADLE_FOLDER=/root/.gradle
+
+# https://docs.flutter.dev/release/archive             <<< <<< <<<
+# ENV FLUTTER_VERSION="3.26.0-0.1.pre"
+
+# NOTE: This is a fallback value; check Jenkinsfile for pass-through value.
+ENV USER_DEVELOPER="developer"
+ENV ANDROID_SDK_ROOT=/home/${USER_DEVELOPER}/Android/sdk
+
+# ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools"
+# ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/bin"
+ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin"
+ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/platform-tools"
+# ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools"
+
+ENV PATH="${PATH}:/home/${USER_DEVELOPER}/flutter/bin"
+ENV PATH="${PATH}:/home/${USER_DEVELOPER}/.pub-cache/bin"
+ENV USER_HOME=/home/${USER_DEVELOPER}
+ENV FLUTTER_HOME=/home/${USER_DEVELOPER}/flutter
+ENV PUB_CACHE=/home/${USER_DEVELOPER}/.pub-cache
+
+# Trying to get build # from Jenkinsfile
+# This is just the environment to run Flutter apps.
+# There is nothing build-specific about this dockerfile.
+# ENV BUILD_NUMBER=12
+# ENV BUILD_NUMBER=$PIPELINE_BUILD_NUMBER
+# ENV CURRENT_BUILD_NUMBER=$BUILD_NUMBER
+
+# Set JAVA_HOME environment variable, add JAVA_HOME to the PATH, then verify Java installation.
+# ENV JAVA_HOME=/opt/java/openjdk
+# ENV PATH="${JAVA_HOME}/bin:${PATH}"
+# RUN printf "\n\nJAVA_HOME is set to $JAVA_HOME\n\n" && java -version && printf "\n\n"
+
+# Useful for ensuring UTF-8 compatibility.
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+
+# Prevents prompts during package installation in Debian-based distributions.
+# This is standard practice in Dockerfiles to automate installations.
+ENV DEBIAN_FRONTEND="noninteractive"
+
+#
+# Prerequisites
+#
+
+# Install necessary dependencies.
+#
+# RUN sudo -s
+# RUN sudo apt-get update && sudo apt-get install -qq -y \
+RUN apt-get update -y && apt-get upgrade -y
+
+RUN apt-get update && apt-get install -y locales \
+    && locale-gen en_US.UTF-8
+
+RUN apt-get install -qq -y \
+    openjdk-${JAVA_VERSION}-jdk \
+    curl git unzip xz-utils zip libglu1-mesa \
+    wget clang cmake ninja-build pkg-config
+
+# Install necessary dependencies for building Ruby and working with rbenv
+# RUN apt-get install -qq -y \
+#     build-essential libssl-dev libreadline-dev \
+#     zlib1g-dev libsqlite3-dev libffi-dev libxml2-dev \
+#     libcurl4-openssl-dev software-properties-common \
+#     libgdbm-dev
+RUN apt-get install -qq -y \
+    build-essential libssl-dev libreadline-dev \
+    zlib1g-dev libsqlite3-dev libffi-dev libxml2-dev \
+    libcurl4-openssl-dev software-properties-common \
+    libgdbm-dev libncurses5-dev libyaml-dev libxslt1-dev \
+    autoconf bison tzdata
+    # autoconf bison tzdata sudo
+
+# RUN apt-get install -qq -y \
+#     ruby-full build-essential libssl-dev
+
+RUN printf "[]... [BEFORE useradd and chown]."
+
+# Set up non-root user and make sure the directory is owned by the user.
+# RUN useradd -ms /bin/bash ${USER_DEVELOPER} && \
+#     chown -R ${USER_DEVELOPER}:${USER_DEVELOPER} /home/${USER_DEVELOPER}
+#     useradd -ms /bin/bash -G sudo ${USER_DEVELOPER} && \
+# Create developer user and directory
+# Only run if user doesn't exist.
+# RUN groupadd ${USER_DEVELOPER} \
+#     && useradd -ms /bin/bash -g ${USER_DEVELOPER} ${USER_DEVELOPER} \
+#     && mkdir -p /home/${USER_DEVELOPER} \
+#     && chown -R ${USER_DEVELOPER}:${USER_DEVELOPER} /home/${USER_DEVELOPER}
+#     && chown -R ${USER_DEVELOPER}:${USER_DEVELOPER} /home/${USER_DEVELOPER}
+RUN getent group ${USER_DEVELOPER} || groupadd ${USER_DEVELOPER}
+RUN getent passwd ${USER_DEVELOPER} || useradd -ms /bin/bash -g ${USER_DEVELOPER} ${USER_DEVELOPER}
+RUN mkdir -p /home/${USER_DEVELOPER} \
+    && chown -R ${USER_DEVELOPER}:${USER_DEVELOPER} /home/${USER_DEVELOPER}
+
+RUN printf "[]... Printing home/developer"
+RUN ls -la /home/developer
+# There is no workspace directory; it is created as a volume in the Jenkinsfile.
+# RUN printf "[]... Printing home/developer/workspace"
+# RUN ls -ld /home/developer/workspace
+
+RUN printf "[]... Switching to developer user."
+USER $USER_DEVELOPER
+WORKDIR /home/$USER_DEVELOPER
+
+RUN printf "[]... [AFTER useradd and workdir]."
+
+# Install rbenv and ruby-build plugin
+RUN git clone https://github.com/rbenv/rbenv.git ~/.rbenv && \
+    mkdir -p ~/.rbenv/plugins && \
+    git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+
+# Install Ruby using rbenv
+ENV PATH="/home/${USER_DEVELOPER}/.rbenv/bin:/home/${USER_DEVELOPER}/.rbenv/shims:$PATH"
+# RUN rbenv install 3.1.2 && rbenv global 3.1.2
+RUN eval "$(~/.rbenv/bin/rbenv init - bash)" && \
+    rbenv install "${RUBY_VERSION}" && \
+    rbenv global "${RUBY_VERSION}"
+
+# Install required gems
+# RUN gem install --user-install bundler fastlane -NV
+# RUN gem install bundler fastlane -NV cocoapods --no-document
+RUN gem install bundler fastlane -NV
+
+# Verify installations
+RUN ruby -v && bundler -v && fastlane -v
+
+# Set JAVA_HOME environment variable
+ENV JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+#
+# Android
+#
+
+# Prerequisite packages for Android Studio.
+# From Flutter Docs: https://docs.flutter.dev/get-started/install/linux/android
+# RUN apt-get install -qq -y \
+#     libc6:amd64 libstdc++6:amd64 \
+#     libbz2-1.0:amd64 libncurses5:amd64
+
+# Prepare Android directories and system variables.
+#
+RUN mkdir -p ${ANDROID_SDK_ROOT} \
+    && mkdir -p /home/${USER_DEVELOPER}/.android \
+    && touch /home/${USER_DEVELOPER}/.android/repositories.cfg
+
+# Download and set up Android SDK command-line tools.
+#
+# ENV ANDROID_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip"
+ENV ANDROID_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+RUN wget -O android_tools.zip ${ANDROID_TOOLS_URL} \
+    && unzip -qq -d "${ANDROID_SDK_ROOT}/cmdline-tools" android_tools.zip \
+    && rm android_tools.zip \
+    && mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools/latest \
+    && mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools/* ${ANDROID_SDK_ROOT}/cmdline-tools/latest \
+    && rmdir ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools
+
+# Verify the installation.
+#
+# RUN printf "[]... [BEFORE ls -ld on ANDROID_SDK_ROOT]."
+# RUN ls -ld ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin
+# RUN printf "[]... [AFTER]."
+
+# Install Android SDK components.
+#
+RUN yes | sdkmanager --licenses --sdk_root=${ANDROID_SDK_ROOT} \
+    && sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" "platform-tools" \
+    "platforms;android-${ANDROID_VERSION}" "sources;android-${ANDROID_VERSION}" \
+    "emulator" \
+    "system-images;android-${ANDROID_VERSION};google_apis_playstore;${ANDROID_ARCHITECTURE}" --sdk_root=${ANDROID_SDK_ROOT}
+
+# We're running 34, so may not need this fix.
+# Fix Corrupted Android 33.0.0
+#
+# WORKDIR $ANDROID_SDK_ROOT/$BUILD_TOOLS/$ANDROID_BUILD_TOOLS_VERSION
+# RUN echo "Android Tools Path: $ANDROID_SDK_ROOT/$BUILD_TOOLS/$ANDROID_BUILD_TOOLS_VERSION" \
+#   && mv d8 dx
+#
+# WORKDIR $ANDROID_SDK_ROOT/$BUILD_TOOLS/$ANDROID_BUILD_TOOLS_VERSION/$LIB
+# RUN echo "Android Tools Lib Path: $ANDROID_SDK_ROOT/$BUILD_TOOLS/$ANDROID_BUILD_TOOLS_VERSION/$LIB" \
+#   && mv d8.jar dx.jar
+#
+# WORKDIR /home/$USER
+# RUN pwd
+
+# Android is done installing; return to root.
+USER root
+
+# Gradle
+#
+# Download and extract Gradle to /opt folder
+RUN wget --no-check-certificate --no-cookies https://downloads.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip \
+    && unzip gradle-${GRADLE_VERSION}-bin.zip -d /opt \
+    && ln -s /opt/gradle-${GRADLE_VERSION} /opt/gradle \
+    && rm -f gradle-${GRADLE_VERSION}-bin.zip
+
+# Add Gradle executables to path
+RUN update-alternatives --install "/usr/bin/gradle" "gradle" "/opt/gradle/bin/gradle" 1 \
+    && update-alternatives --set "gradle" "/opt/gradle/bin/gradle"
+
+# Create .gradle folder
+RUN mkdir -p ${GRADLE_FOLDER}
+
+# Mark .gradle folder as a volume
+VOLUME ${GRADLE_FOLDER}
+
+#
+# Flutter
+#
+
+# Install Tools: JQ, LCOV, Graphviz, and BC for tooling.
+RUN echo "[]--- Installing: JQ ----"
+RUN apt-get install jq -y
+RUN echo "[]--- Installing: LCOV ----"
+RUN apt-get install lcov -y
+RUN echo "[]--- Installing: Graphviz ----"
+RUN apt-get install -y graphviz
+RUN echo "[]--- Installing: BC ----"
+RUN apt-get install -y bc
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Switch to $USER_DEVELOPER for additional settings such as Flutter setup.
+USER ${USER_DEVELOPER}
+
+# Download Flutter SDK and checkout a specific version (e.g., 3.26.0-0.1.pre).
+# RUN git clone https://github.com/flutter/flutter.git $FLUTTER_HOME \
+#     && cd $FLUTTER_HOME \
+#     && git checkout ${FLUTTER_VERSION}
+
+RUN git clone https://github.com/flutter/flutter.git ${FLUTTER_HOME}
+RUN flutter channel beta
+RUN flutter upgrade
+
+# RUN printf "[] RUN ls -ld on FLUTTER_HOME"
+# RUN ls -ld ${FLUTTER_HOME}
+# RUN printf "[] END END END"
+
+# Make Flutter Home a safe directory.
+RUN git config --global --add safe.directory "${FLUTTER_HOME}"
+# Translates to:
+#   RUN git config --global --add safe.directory /home/developer/flutter
+# From [DockerfileAgent]:
+#   RUN git config --global --add safe.directory /home/developer/workspace/my-app-deploy
+
+# Run Flutter setup and doctor commands.
+RUN flutter doctor --android-licenses \
+    && flutter doctor -v
+
+# Install Very Good Command Line Interface.
+RUN dart pub global activate very_good_cli
+
+# Final checks.
+# RUN echo "[] Flutter and Java version:"
+# RUN flutter --version \
+#     && java --version
+
+# RUN mv home
+# RUN echo "PWD _ USER_HOME: [${USER_HOME}]"
+# RUN pwd
+# RUN ls -la $USER_HOME

@@ -1,0 +1,25 @@
+FROM jenkins/inbound-agent
+
+USER root
+ENV USER_DEVELOPER="developer"
+
+RUN groupadd ${USER_DEVELOPER} \
+    && useradd -ms /bin/bash -g ${USER_DEVELOPER} ${USER_DEVELOPER} \
+    && mkdir -p /home/${USER_DEVELOPER} \
+    && chown -R ${USER_DEVELOPER}:${USER_DEVELOPER} /home/${USER_DEVELOPER}
+
+# Install dependencies for both Jenkins and Flutter
+RUN groupadd docker && usermod -aG docker jenkins \
+    && apt-get update && apt-get install -y \
+    sudo iputils-ping curl net-tools vim less git unzip build-essential docker.io \
+    && echo "jenkins ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && echo "${USER_DEVELOPER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && newgrp docker \
+    && apt-get clean
+    # The sock isn't mounted until the container is run.
+    # && sudo chmod 660 /var/run/docker.sock \
+    # && sudo chown root:docker /var/run/docker.sock
+
+USER jenkins
+
+RUN git config --global --add safe.directory /home/developer/workspace/my-app-deploy
