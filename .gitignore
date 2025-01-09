@@ -1,1 +1,23 @@
 **/remoting
+
+# https://dart.dev/tools/pub/private-files
+
+# Pub
+.dart_tool/
+build/
+pubspec.lock
+
+# Dart Doc
+doc/api/
+
+# IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Mac
+.DS_Store
+
+# Local
+private

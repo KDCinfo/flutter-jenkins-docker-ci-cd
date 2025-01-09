@@ -1,4 +1,4 @@
-# Welcome to a 2024->2025 Flutter CI/CD Flow with Docker and Jenkins
+# Welcome to a 2025 Flutter CI/CD Flow with Jenkins and Docker on a Mac Host
 
 Please see the following blog post for a visual overview related to this repository.
 
@@ -44,6 +44,7 @@ The clone above should create the following structure:
 - Development/projects/src/dev-mac/assets
 - Development/projects/src/dev-mac/jenkins-docker
 - Development/projects/src/dev-mac/jenkins-docker-agent
+- Development/projects/src/dev-mac/my-app
 
 Placement of secret keys is assumed to be at (as created above):
 
