@@ -55,7 +55,7 @@ Placement of Flutter app files is assumed to be at:
 
 ## STEP 2 | Setup and Startup
 
-Please see the 'readme.md' in the 'jenkins-docker-agent' folder for ramaining setup instructions.
+Please see the '[README.md](jenkins-docker-agent/README.md)' in the 'jenkins-docker-agent' folder for ramaining setup instructions.
 
 
 ## Background
