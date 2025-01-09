@@ -2,7 +2,7 @@
 
 Please see the following blog post for a visual overview related to this repository.
 
-- The egg came first, which is why this chicken is lost. (i.e. TBA; @TODO:)
+- https://kdcinfo.com/blog/2025/01/09/a-2025-flutter-ci-cd-flow-using-jenkins-docker-dind-and-fastlane-hosted-on-a-mac/
 
 
 ## IMPORTANT NOTES
