@@ -1,0 +1,142 @@
+[
+    {
+        "id": 1,
+        "clumpName": "Development done",
+        "clumpCode": "Decision is made to deploy apps to stores.",
+        "column": 1,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 2,
+        "clumpName": "Start Mac",
+        "clumpCode": "If not working on the Mac already, time to start up the Mac, Docker, and Jenkins",
+        "column": 1,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 3,
+        "clumpName": "Start TeamViewer (optional)",
+        "clumpCode": "Remote UI to Mac",
+        "column": -1,
+        "linkedClumpID": 2
+    },
+    {
+        "id": 4,
+        "clumpName": "Start Docker Desktop",
+        "clumpCode": "Observe: No containers are active in the Containers panel.\n\nSubsequent Docker Desktop startups may show two containers stopped (but not active):\n- 'jenkins-blueocean' (the Jenkins controller) and\n- 'flutter-node' (the primary agent).",
+        "column": 1,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 5,
+        "clumpName": "Start Jenkins",
+        "clumpCode": "Double check that all shell scripts are set with:\n> `chmod +x scriptname.sh` (e.g. `755`).\n\nThis includes not only the scripts in the 'jenkins-docker' structure,\n  but the scripts in the app's 'tools' folder as well.",
+        "column": 1,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 6,
+        "clumpName": "CLI: cd ~/Development/projects/src/dev-mac/jenkins-docker/",
+        "clumpCode": "This directory houses\n- `runmac.sh`,\n- `runj.sh`,\n- `stopj.sh`,\n- `DockerfileAgent`,\n- `DockerfileController`, and\n- a `flutter` subfolder.",
+        "column": -1,
+        "linkedClumpID": 5
+    },
+    {
+        "id": 7,
+        "clumpName": "CLI: ./runmac.sh",
+        "clumpCode": "This needs to be run each time Docker Desktop is started (at least it did in my case).\n\nNote: Be sure to replace 'macuser' with your own Mac login/home user.\n\nExpected output when running this command:\n\nsrwxr-xr-x@ 1 macuser  staff  0 Dec  5 23:29 /Users/macuser/.docker/run/docker.sock\n... ... ... before ^^^\n\n... ... ... Need Mac/host local password for: 'chown' and 'chmod':\nPassword:\n\n... ... ... after vvv\nsrw-rw----@ 1 root  docker  0 Dec  5 23:29 /Users/macuser/.docker/run/docker.sock\n\n... ... ... Confirm: srw-rw----@ 1 root  docker",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 8,
+        "clumpName": "CLI: ./runj.sh",
+        "clumpCode": "This starts up the Jenkins DinD, Jenkins controller, and a Jenkins agent.\n\nCONTAINER_NAME_JENKINS=\"jenkins-docker\"\nCONTAINER_NAME_BLUEOCEAN=\"jenkins-blueocean\"\nCONTAINER_NAME_FLUTTER=\"flutter-node\"\n\n# Sample Output\n\nmacuser@MacUser-MBP jenkins-docker % ./runj.sh  \n\n... ... ... begin\n\nCheck for: [660 && root : docker] (on /Users/macuser/.docker/run/docker.sock)\nsrw-rw----@ 1 root  docker  0 Dec  5 23:29 /Users/macuser/.docker/run/docker.sock\n\nHas 'runmac.sh' been run? (Y/n)  \n\n... ... ... checking if jenkins-blueocean is running...\njenkins-blueocean is not running or does not exist\n\n... ... ... dind\ndind: Pulling from library/docker\nDigest: sha256:6ca...9da\nStatus: Image is up to date for docker:dind\ndocker.io/library/docker:dind\n\n... ... ...jdk\n\nlts: Pulling from jenkins/jenkins\nDigest: sha256:e72...c4e\nStatus: Image is up to date for jenkins/jenkins:lts\ndocker.io/jenkins/jenkins:lts\n\n... images pulled\n\n... network 'jenkins' already exists.\n\n... starting up container 'jenkins-docker'.\n\nde8...dcf\n\n... building myjenkins-blueocean (new images can take a few minutes)\n\n[+] Building 0.1s (10/10) FINISHED                                                                                                                                  docker:desktop-linux\n => [internal] load build definition from DockerfileController                                                                                                                      0.0s\n => => transferring dockerfile: 960B                                                                                                                                                0.0s\n => [internal] load metadata for docker.io/jenkins/jenkins:lts                                                                                                                      0.0s\n => [internal] load .dockerignore                                                                                                                                                   0.0s\n => => transferring context: 2B                                                                                                                                                     0.0s\n => [1/6] FROM docker.io/jenkins/jenkins:lts                                                                                                                                        0.0s\n => CACHED [2/6] RUN groupadd docker && usermod -aG docker jenkins     && apt-get update     && apt-get install -y lsb-release     && newgrp docker                                 0.0s\n => CACHED [3/6] RUN curl -fsSLo /usr/share/keyrings/docker-archive-keyring.asc   https://download.docker.com/linux/debian/gpg                                                      0.0s\n => CACHED [4/6] RUN echo \"deb [arch=$(dpkg --print-architecture)   signed-by=/usr/share/keyrings/docker-archive-keyring.asc]   https://download.docker.com/linux/debian   $(lsb_r  0.0s\n => CACHED [5/6] RUN apt-get update && apt-get install -y docker-ce-cli                                                                                                             0.0s\n => CACHED [6/6] RUN jenkins-plugin-cli --plugins \"blueocean docker-workflow\"                                                                                                       0.0s\n => exporting to image                                                                                                                                                              0.0s\n => => exporting layers                                                                                                                                                             0.0s\n => => writing image sha256:d1b...7d7                                                                                        0.0s\n => => naming to docker.io/library/myjenkins-blueocean                                                                                                                              0.0s\n\nView build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/pqo3wa6maji00qyf2n2ryp53j\n\nWhat's next:\n    View a summary of image vulnerabilities and recommendations → docker scout quickview \n\n... ... ... starting Jenkins Controller\n\n... container 'jenkins-blueocean' exists but is stopped. Starting it.\n\njenkins-blueocean\n\n... ... ... starting Flutter agent node\n\n... container 'flutter-node' exists but is stopped. Starting it.\n\nflutter-node\njenkins\njenkins : jenkins docker\nsrw-rw---- 1 root root 0 Dec  6 07:54 /var/run/docker.sock\nsrw-rw---- 1 root docker 0 Dec  6 07:54 /var/run/docker.sock\n\nWhat's next:\n    Try Docker Debug for seamless, persistent debugging tools in any container or image → docker debug flutter-node\n    Learn more at https://docs.docker.com/go/debug-cli/\n\nTo double check ownership, run:\n\n> docker exec -it flutter-node bash\n> ls -la /var/run/docker.sock\nIf not set to root:docker...\n> sudo chown root:docker /var/run/docker.sock\n\nJenkins is starting up. You can access it at http://jenkins-blueocean:8080",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 9,
+        "clumpName": "PRE-CONFIG: Build the Flutter Environment Docker Image for Jenkinsfile usage",
+        "clumpCode": "This section should be done and run prior to the first Jenkins build,\n  and for subsequent Flutter environment upgrades (although not the\n  Flutter framework, for which the latest is always retrieved).\n\nThe files for this section are in the 'jenkins-docker\flutter' folder.\n\n- Update the 'runf.sh' file with your own Docker Hub info.\n- Check and update the `DockerfileFlutter` file as needed.",
+        "column": 1,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 10,
+        "clumpName": "Increase the current version in `runf.sh`.",
+        "clumpCode": "> CURRENT_VERSION=\"1.0.1\"",
+        "column": -1,
+        "linkedClumpID": 9
+    },
+    {
+        "id": 11,
+        "clumpName": "Update the image file: `DockerfileFlutter`",
+        "clumpCode": "",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 12,
+        "clumpName": "Run the command that fits:",
+        "clumpCode": "This will build the image with the Flutter environment.\n\nThe final image can be stored in a private repo on Docker Hub.\n\n> CLI: ./runf.sh  # Build current version\n> CLI: ./runf.sh push  # Build and push current version\n> CLI: ./runf.sh 1.0.1  # Build a previous version (will replace latest)\n> CLI: ./runf.sh 1.0.0 push  # Build and push a previous version (will replace latest)",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 13,
+        "clumpName": "Start Jenkins Agent on Mac host (for iOS builds)",
+        "clumpCode": "When building to iOS, an IPA must be created in a Mac-based environment,\n  for which we can use our host Mac by giving it its own agent.\n\nThis does not mean Jenkins needs to be installed on the host Mac\n  (which is what the Jenkins Docker containers are for) &mdash; the agent is just a component or library service.\n\nNote though: Xcode, Flutter and fastlane will need to be installed and up to date on the host Mac.",
+        "column": 1,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 14,
+        "clumpName": "CLI: Open a new terminal window",
+        "clumpCode": "Although the host Mac agent can be set to run as a background task,\n  I keep it running so I can monitor any issues.",
+        "column": -1,
+        "linkedClumpID": 13
+    },
+    {
+        "id": 15,
+        "clumpName": "CLI: cd ~/Development/projects/src/dev-mac/jenkins-docker-agent/",
+        "clumpCode": "The host Mac agent is run from a sibling 'jenkins-docker' folder.",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 16,
+        "clumpName": "CLI: ./runa.sh",
+        "clumpCode": "",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 17,
+        "clumpName": "Deploy to stores",
+        "clumpCode": "Run a script to:\n- determine if a new app version and release notes are needed,\n- merge the 'main' branch into the 'build_release' branch, then\n- trigger the Jenkins build*.\n\n* If git is set to watch the 'build_release' branch, the build trigger can be removed from the script.",
+        "column": 1,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 18,
+        "clumpName": "CLI: cd ~/Development/projects/my-app/app/tools/",
+        "clumpCode": "All CI/CD shells scripts are stored in each app's own 'tools' directory.",
+        "column": -1,
+        "linkedClumpID": 17
+    },
+    {
+        "id": 19,
+        "clumpName": "CLI: ./rund.sh",
+        "clumpCode": "[run deploy] This script will execute the steps mentioned above.",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 20,
+        "clumpName": "Monitor Jenkins progress across two pipelines",
+        "clumpCode": "If the primary Jenkins pipeline job succeeds, Android will have been deployed\n  and a 2nd Jenkins pipeline will be started to build and deploy iOS.",
+        "column": 1,
+        "linkedClumpID": -1
+    }
+]

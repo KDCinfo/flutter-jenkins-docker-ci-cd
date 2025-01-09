@@ -1,0 +1,16 @@
+# Steps to load Data Clump Flow
+
+For more of a forest-level view, you can view this entire CI/CD flow using the Data Clump Flow Analysis Tool.
+
+1. Visit: https://kdcinfo.com/app/dataflow
+  - The Data Clump Flow tool [is open source](https://github.com/KDCinfo/dataflow).
+
+2. [Optional] Create a new "Flow" storage space
+  - The "Flow management" is below the export/import buttons.
+  - Do not forget to "Use" the new Flow after creating it.
+
+3. Click the [Import Data] button
+
+4. Select and load [dataclumps.json]
+
+_

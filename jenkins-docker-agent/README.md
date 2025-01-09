@@ -147,21 +147,41 @@ Once you save your secret in the `keys` folder, then run the `curl` command to d
 
 ## PART 6: Run Through the Flow
 
-The following steps to view the Data Clump Flow JSON file are also outlined in the file:
+As mentioned above, once everything is set up, the routine way to start it all up is as follows:
 
-- ~Development/projects/src/dev-mac/assets/dataclumpflow.txt
+```sh
+> % cd Development/projects/src/dev-mac/jenkins-docker
+> % ./runmac.sh
+> % ./runj.sh  # 3 containers spin up
+> % cd ../jenkins-docker-agent
+> % ./runa.sh  # Agent stays running in terminal for observation
+```
+
+Note: When you run the `runj.sh` script in a fresh terminal window, you may get a pop-up asking to allow accessing data from other apps. This is expected and can be allowed.
+
+To stop Jenkins, kill the `runa.sh` agent, and run `stopj.sh` to stop the Jenkins containers.
+
+```sh
+> % cd Development/projects/src/dev-mac/jenkins-docker
+> % ./stopj.sh  # Stops all 3 Jenkins containers
+```
+
+For more of a forest-level view, you can also view the entire flow using the Data Clump Flow Analysis Tool.
+
+The following steps for viewing the Data Clump Flow JSON file are also outlined in the file:
+
+- [assets/dataclumpflow.txt](../assets/dataclumpflow.txt)
 
 1. Visit: https://kdcinfo.com/app/dataflow
-  - kdcinfo.com has been my personal domain for...ever!
-  - The Data Flow Tool link is also available on https://kdcbase.com
+  - The Data Clump Flow tool [is open source](https://github.com/KDCinfo/dataflow).
 
-2. [Optional] Create a new "Flow" storage space
-  - Flow management is below the export/import buttons
-  - Do not forget to "Use" the new Flow after creating it
+2. [Optional] Create a new "Flow" storage space:
+  - The "Flow management" is below the export/import buttons.
+  - Do not forget to "Use" the new Flow after creating it.
 
 3. Click the [Import Data] button
 
-4. Select and load [dataclumps.json]
+4. Select and load [dataclumps.json](../assets/dataclumps.json)
 
 
 ## Failures
