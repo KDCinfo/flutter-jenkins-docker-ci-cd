@@ -6,7 +6,7 @@ This README covers everything else: setting and starting up Jenkins in Docker.
 
 - Routine Startup
 - PART 1
-  - Set Up Jenkins: Pipelines, Nodes, and Credentials
+  - Set up Jenkins: Pipelines, Nodes, and Credentials
 - PART 2
   - `dev-mac/jenkins-docker`
     - `./runmac.sh  #` Run `chmod` on `docker.sock`
@@ -18,6 +18,8 @@ This README covers everything else: setting and starting up Jenkins in Docker.
   - `dev-mac/jenkins-docker-agent
     - `./runa.sh  #  ` Run Mac Host Agent
 - PART 5
+  - Set up 'my-app'
+- PART 6
   - Run through the flow
 
 
@@ -49,9 +51,9 @@ They should be, but I have not double checked that these are the same as what's 
 ```
 
 
-## PART 1: Set Up Jenkins: Pipelines, Nodes, and Credentials
+## PART 1: Set up Jenkins: Pipelines, Nodes, and Credentials
 
-See the 'readme-jenkins.md' file for instructions on creating the pipelines, as well as setting up nodes and creating credentials.
+See the 'README-jenkins.md' file for instructions on creating the pipelines, as well as setting up nodes and creating credentials.
 
 
 ## PART 2:
@@ -138,7 +140,12 @@ Once you save your secret in the `keys` folder, then run the `curl` command to d
 - https://www.jenkins.io/blog/2022/12/27/run-jenkins-agent-as-a-service/
 
 
-## PART 5: Run Through the Flow
+## PART 5: Set up 'my-app'
+
+- Refer to the 'README.md' in the '/my-app' directory for adding 'tools' and 'fastlane' folders.
+
+
+## PART 6: Run Through the Flow
 
 The following steps to view the Data Clump Flow JSON file are also outlined in the file:
 

@@ -1,0 +1,15 @@
+# release-notes.txt
+
+> maj.min.patch+build (Jenkins build #)
+
+- The Jenkins build overwrites the '+build' during deployment to the app stores.
+- There should always be a '(TBA)' version.
+- Update the first notes below, then the script will be able to do it on subsequent runs.
+
+# version: 1.0.1+1 (TBA)
+- Replace these placeholder lines with your first commit.
+- (This has not been tested from scratch; only after the first few commits.)
+- After this first manual commit, the 'rund.sh' script will be able to increment the version and build.
+
+# version: 1.0.0+0 (0)
+- Initial commit

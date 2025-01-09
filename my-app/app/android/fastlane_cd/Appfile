@@ -1,0 +1,22 @@
+#
+# NOTE: 'fastlane init' should be run before this file is referenced.
+#
+
+# Path to the json secret file:
+# - To get one: https://docs.fastlane.tools/actions/supply/#setup
+#
+# When using fastlane locally on Mac:
+# json_key_file("/Users/macuser/Development/projects/src/keys/gcloud-my-app-00---0x.json")
+#
+# From: [../../tools/build_android_release.sh]
+# > export GOOGLE_APPLICATION_CREDENTIALS="${FASTLANE_JSON_KEY_PATH}"
+json_key_file(ENV['GOOGLE_APPLICATION_CREDENTIALS'])
+
+# The Android `package_name` should not have underscores (or hyphens).
+#   However, if it does already ...
+#   https://developer.android.com/build/configure-app-module
+#   Important: Once you publish your app, you should never change the application ID.
+#     If you change the application ID, Google Play Store treats the upload as a completely different app.
+#     If you want to upload a new version of your app, you must use the same application ID and signing certificate as when originally published.
+# @TODO: Update the package_name to your app's package name.
+package_name("com.mydomain.myapp")

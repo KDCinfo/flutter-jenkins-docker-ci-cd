@@ -40,29 +40,14 @@ ENV GRADLE_FOLDER=/root/.gradle
 ENV USER_DEVELOPER="developer"
 ENV ANDROID_SDK_ROOT=/home/${USER_DEVELOPER}/Android/sdk
 
-# ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools"
-# ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/bin"
 ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin"
 ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/platform-tools"
-# ENV PATH="${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools"
 
 ENV PATH="${PATH}:/home/${USER_DEVELOPER}/flutter/bin"
 ENV PATH="${PATH}:/home/${USER_DEVELOPER}/.pub-cache/bin"
 ENV USER_HOME=/home/${USER_DEVELOPER}
 ENV FLUTTER_HOME=/home/${USER_DEVELOPER}/flutter
 ENV PUB_CACHE=/home/${USER_DEVELOPER}/.pub-cache
-
-# Trying to get build # from Jenkinsfile
-# This is just the environment to run Flutter apps.
-# There is nothing build-specific about this dockerfile.
-# ENV BUILD_NUMBER=12
-# ENV BUILD_NUMBER=$PIPELINE_BUILD_NUMBER
-# ENV CURRENT_BUILD_NUMBER=$BUILD_NUMBER
-
-# Set JAVA_HOME environment variable, add JAVA_HOME to the PATH, then verify Java installation.
-# ENV JAVA_HOME=/opt/java/openjdk
-# ENV PATH="${JAVA_HOME}/bin:${PATH}"
-# RUN printf "\n\nJAVA_HOME is set to $JAVA_HOME\n\n" && java -version && printf "\n\n"
 
 # Useful for ensuring UTF-8 compatibility.
 ENV LC_ALL=en_US.UTF-8
@@ -81,6 +66,7 @@ ENV DEBIAN_FRONTEND="noninteractive"
 #
 # RUN sudo -s
 # RUN sudo apt-get update && sudo apt-get install -qq -y \
+# You should not have to use 'sudo'.
 RUN apt-get update -y && apt-get upgrade -y
 
 RUN apt-get update && apt-get install -y locales \
@@ -92,11 +78,6 @@ RUN apt-get install -qq -y \
     wget clang cmake ninja-build pkg-config
 
 # Install necessary dependencies for building Ruby and working with rbenv
-# RUN apt-get install -qq -y \
-#     build-essential libssl-dev libreadline-dev \
-#     zlib1g-dev libsqlite3-dev libffi-dev libxml2-dev \
-#     libcurl4-openssl-dev software-properties-common \
-#     libgdbm-dev
 RUN apt-get install -qq -y \
     build-essential libssl-dev libreadline-dev \
     zlib1g-dev libsqlite3-dev libffi-dev libxml2-dev \
@@ -105,22 +86,8 @@ RUN apt-get install -qq -y \
     autoconf bison tzdata
     # autoconf bison tzdata sudo
 
-# RUN apt-get install -qq -y \
-#     ruby-full build-essential libssl-dev
-
 RUN printf "[]... [BEFORE useradd and chown]."
 
-# Set up non-root user and make sure the directory is owned by the user.
-# RUN useradd -ms /bin/bash ${USER_DEVELOPER} && \
-#     chown -R ${USER_DEVELOPER}:${USER_DEVELOPER} /home/${USER_DEVELOPER}
-#     useradd -ms /bin/bash -G sudo ${USER_DEVELOPER} && \
-# Create developer user and directory
-# Only run if user doesn't exist.
-# RUN groupadd ${USER_DEVELOPER} \
-#     && useradd -ms /bin/bash -g ${USER_DEVELOPER} ${USER_DEVELOPER} \
-#     && mkdir -p /home/${USER_DEVELOPER} \
-#     && chown -R ${USER_DEVELOPER}:${USER_DEVELOPER} /home/${USER_DEVELOPER}
-#     && chown -R ${USER_DEVELOPER}:${USER_DEVELOPER} /home/${USER_DEVELOPER}
 RUN getent group ${USER_DEVELOPER} || groupadd ${USER_DEVELOPER}
 RUN getent passwd ${USER_DEVELOPER} || useradd -ms /bin/bash -g ${USER_DEVELOPER} ${USER_DEVELOPER}
 RUN mkdir -p /home/${USER_DEVELOPER} \
@@ -129,8 +96,6 @@ RUN mkdir -p /home/${USER_DEVELOPER} \
 RUN printf "[]... Printing home/developer"
 RUN ls -la /home/developer
 # There is no workspace directory; it is created as a volume in the Jenkinsfile.
-# RUN printf "[]... Printing home/developer/workspace"
-# RUN ls -ld /home/developer/workspace
 
 RUN printf "[]... Switching to developer user."
 USER $USER_DEVELOPER
@@ -151,8 +116,6 @@ RUN eval "$(~/.rbenv/bin/rbenv init - bash)" && \
     rbenv global "${RUBY_VERSION}"
 
 # Install required gems
-# RUN gem install --user-install bundler fastlane -NV
-# RUN gem install bundler fastlane -NV cocoapods --no-document
 RUN gem install bundler fastlane -NV
 
 # Verify installations
@@ -168,9 +131,6 @@ ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Prerequisite packages for Android Studio.
 # From Flutter Docs: https://docs.flutter.dev/get-started/install/linux/android
-# RUN apt-get install -qq -y \
-#     libc6:amd64 libstdc++6:amd64 \
-#     libbz2-1.0:amd64 libncurses5:amd64
 
 # Prepare Android directories and system variables.
 #
@@ -202,20 +162,6 @@ RUN yes | sdkmanager --licenses --sdk_root=${ANDROID_SDK_ROOT} \
     "platforms;android-${ANDROID_VERSION}" "sources;android-${ANDROID_VERSION}" \
     "emulator" \
     "system-images;android-${ANDROID_VERSION};google_apis_playstore;${ANDROID_ARCHITECTURE}" --sdk_root=${ANDROID_SDK_ROOT}
-
-# We're running 34, so may not need this fix.
-# Fix Corrupted Android 33.0.0
-#
-# WORKDIR $ANDROID_SDK_ROOT/$BUILD_TOOLS/$ANDROID_BUILD_TOOLS_VERSION
-# RUN echo "Android Tools Path: $ANDROID_SDK_ROOT/$BUILD_TOOLS/$ANDROID_BUILD_TOOLS_VERSION" \
-#   && mv d8 dx
-#
-# WORKDIR $ANDROID_SDK_ROOT/$BUILD_TOOLS/$ANDROID_BUILD_TOOLS_VERSION/$LIB
-# RUN echo "Android Tools Lib Path: $ANDROID_SDK_ROOT/$BUILD_TOOLS/$ANDROID_BUILD_TOOLS_VERSION/$LIB" \
-#   && mv d8.jar dx.jar
-#
-# WORKDIR /home/$USER
-# RUN pwd
 
 # Android is done installing; return to root.
 USER root
@@ -257,25 +203,15 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Switch to $USER_DEVELOPER for additional settings such as Flutter setup.
 USER ${USER_DEVELOPER}
 
-# Download Flutter SDK and checkout a specific version (e.g., 3.26.0-0.1.pre).
-# RUN git clone https://github.com/flutter/flutter.git $FLUTTER_HOME \
-#     && cd $FLUTTER_HOME \
-#     && git checkout ${FLUTTER_VERSION}
-
+# Download Flutter SDK
 RUN git clone https://github.com/flutter/flutter.git ${FLUTTER_HOME}
 RUN flutter channel beta
 RUN flutter upgrade
-
-# RUN printf "[] RUN ls -ld on FLUTTER_HOME"
-# RUN ls -ld ${FLUTTER_HOME}
-# RUN printf "[] END END END"
 
 # Make Flutter Home a safe directory.
 RUN git config --global --add safe.directory "${FLUTTER_HOME}"
 # Translates to:
 #   RUN git config --global --add safe.directory /home/developer/flutter
-# From [DockerfileAgent]:
-#   RUN git config --global --add safe.directory /home/developer/workspace/my-app-deploy
 
 # Run Flutter setup and doctor commands.
 RUN flutter doctor --android-licenses \
@@ -284,12 +220,4 @@ RUN flutter doctor --android-licenses \
 # Install Very Good Command Line Interface.
 RUN dart pub global activate very_good_cli
 
-# Final checks.
-# RUN echo "[] Flutter and Java version:"
-# RUN flutter --version \
-#     && java --version
-
-# RUN mv home
-# RUN echo "PWD _ USER_HOME: [${USER_HOME}]"
-# RUN pwd
-# RUN ls -la $USER_HOME
+RUN printf "[]... [DockerfileFlutter Complete]."

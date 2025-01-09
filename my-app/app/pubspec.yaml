@@ -1,0 +1,73 @@
+name: my_app
+description: My new Flutter project.
+
+# Try to keep the 'version' within the first 10 lines so a 'cat' command will show it.
+version: 1.0.0+0
+
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+environment:
+  sdk: '>=3.4.0-247.0.dev <4.0.0'
+
+dependencies:
+  auto_size_text: 3.0.0
+  bloc: 8.1.4
+  collection: 1.19.0
+  cupertino_icons: 1.0.8
+  equatable: 2.0.7
+  flutter:
+    sdk: flutter
+  flutter_bloc: 8.1.6
+  flutter_secure_storage: 9.2.2
+  go_router: 14.6.2
+  http: 1.2.2
+  hydrated_bloc: 9.1.5
+  intl: 0.20.1
+  json_annotation: 4.9.0
+  package_info_plus: 8.1.2
+  path_provider: 2.1.5
+  rxdart: 0.28.0
+  shared_preferences: 2.3.2
+  url_launcher: 6.3.1
+  url_launcher_web: 2.3.3
+
+dev_dependencies:
+  bloc_test: 9.1.7
+  build_runner: 2.4.14
+  flutter_launcher_icons: 0.14.2
+  flutter_test:
+    sdk: flutter
+  json_serializable: 6.9.2
+  mocktail: 1.0.4
+  test: 1.25.8
+  very_good_analysis: 7.0.0
+
+# flutter_launcher_icons:
+#   ios: true
+#   android: true
+#   remove_alpha_ios: true
+#   image_path_ios: "assets/images/myapp_icon_1024_h_noalpha.png"
+#   image_path_android: "assets/images/myapp_icon_1024_h_whole.png"
+#   adaptive_icon_background: "assets/images/myapp_icon_1024_back.png"
+#   adaptive_icon_foreground: "assets/images/myapp_icon_1024_h_fore.png"
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+# The following section is specific to Flutter.
+flutter:
+  uses-material-design: true
+
+  # assets:
+  #   - assets/images/myapp_btn-298-136.png
+  #   - assets/images/myapp_btn-290-120.png
+  #   - assets/images/myapp_icon_1024_back.png
+  #   - assets/images/myapp_icon_1024_h_fore.png
+  #   - assets/images/myapp_icon_1024_h_noalpha.png
+  #   - assets/images/myapp_icon_1024_h_whole.png
+
+  # fonts:
+  #   - family: Lato
+  #     fonts:
+  #       - asset: assets/fonts/Lato-Regular.ttf
+  #       - asset: assets/fonts/Lato-Bold.ttf
+  #         weight: 700

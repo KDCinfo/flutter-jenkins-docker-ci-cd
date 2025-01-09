@@ -1,0 +1,55 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#     https://docs.fastlane.tools/plugins/available-plugins
+
+# Uncomment this line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:android)
+
+platform :android do
+  #
+  desc "Deploy the .aab file to Google Play Beta"
+  lane :deploy_to_play_store do
+    # Print the current directory
+    # sh("pwd") doesn't work
+    sh("echo $PWD")
+    # Print the content of the current directory
+    sh("ls -la")
+    # Print the content of the archive directory
+    sh("ls -la ./archive")
+
+    aab_dir_path = "#{Dir.pwd}/archive/#{ENV['AAB_NAME']}"
+    sh("echo Dir.pwd AAB path: #{aab_dir_path}")
+
+    aab_path = "./archive/#{ENV['AAB_NAME']}"
+    sh("echo Resolved AAB path: #{aab_path}")
+
+    supply(
+      # Use the environment variable for the AAB
+      # apk: "./archive/#{ENV['AAB_NAME']}",
+      # aab: "./archive/#{ENV['AAB_NAME']}",
+      aab: aab_dir_path,
+      # track: 'fastlane',
+      track: 'internal',
+      # Use the exported credentials path
+      json_key: ENV['GOOGLE_APPLICATION_CREDENTIALS'],
+      # Skip the metadata, images and screenshots
+      # as they are already uploaded to the Google Play Console
+      # (this is useful when you want to upload the AAB only)
+      skip_upload_metadata: false,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+
+      # When not skipping:
+      # metadata_path: "./android/fastlane/metadata/android",
+      # images_path: "./android/fastlane/metadata/android/images",
+      # screenshots_path: "./android/fastlane/metadata/android/screenshots"
+    )
+  end
+end

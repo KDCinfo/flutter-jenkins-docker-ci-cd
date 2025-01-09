@@ -1,0 +1,257 @@
+#!groovy
+
+pipeline {
+    agent {
+        docker {
+            // This is the image created from the 'DockerfileFlutter' file
+            // when running the 'jenkins-docker/flutter/runf.sh' script.
+            // If not uploading to a repository, the 'macuser/' can be removed.
+            image 'macuser/local-dev-mac:latest'
+
+            // When the label property is omitted, Jenkins will use the default node
+            // (the built-in node, which in this case is the Jenkins controller).
+            label "flutter"
+            args '''
+                -u developer:developer
+                -v /var/lib/jenkins/.ssh:/var/lib/jenkins-ssh:ro
+                -v /Users/macuser/Development/jenkins-workspace:/home/developer/workspace
+            '''
+        }
+    }
+    options {
+        // This keeps the build logs tidy by discarding old builds and only keeping a
+        // set number (30 in this case). This is important for maintaining disk space.
+        buildDiscarder(logRotator(numToKeepStr: "30"))
+
+        // This adds timestamps to the logs, making it easier to track the progress of the build.
+        timestamps()
+    }
+    environment {
+        // Set to false to disable format and analysis checks.
+        RUN_INIT = true
+
+        // Set one of these to 'false' if one passes and the other fails to only run one.
+        RUN_ANDROID = true
+        RUN_IOS = true
+
+        USER_DEVELOPER = "developer"
+        LOCAL_BIN = "/usr/local/bin"
+        PATH = "/home/${USER_DEVELOPER}:${env.PATH}:${LOCAL_BIN}"
+
+        USER_HOME = "/home/${USER_DEVELOPER}"
+        FLUTTER_HOME = "/home/${USER_DEVELOPER}/flutter"
+        WORKSPACE_LOCAL = "/home/developer/workspace"
+
+        PIPELINE_BUILD_NUMBER = "${env.BUILD_NUMBER}"
+
+        ANDROID_STORE_PASSWORD = credentials('ANDROID_STORE_PASSWORD')
+        ANDROID_KEY_PASSWORD = credentials('ANDROID_KEY_PASSWORD')
+        ANDROID_KEY_ALIAS = credentials('ANDROID_KEY_ALIAS')
+        GOOGLE_PLAY_JSON_TOKEN_MY_APP = credentials('GOOGLE_PLAY_JSON_TOKEN_MY_APP')
+
+        GEM_HOME = "${USER_HOME}/.gem"
+    }
+    stages {
+        stage('Git Config') {
+            steps {
+                script {
+                    echo "whoami:"
+                    sh "whoami"
+                    echo "pwd:"
+                    sh "pwd"
+                    echo "ls -la:"
+                    sh "ls -la"
+
+                    // FLUTTER_HOME
+                    echo "[${env.PIPELINE_BUILD_NUMBER}] Git Config | FLUTTER_HOME: ${env.FLUTTER_HOME}"
+                    sh "ls -ld ${env.FLUTTER_HOME}"
+
+                    // USER_HOME
+                    echo "[${env.PIPELINE_BUILD_NUMBER}] Git Config | USER_HOME: ${env.USER_HOME}"
+                    sh "ls -ld ${env.USER_HOME}"
+                    sh "ls -la ${env.USER_HOME}"
+
+                    sh '''
+                        echo "groups:"
+                        groups
+                    '''
+                    // WORKSPACE_LOCAL
+                    echo "[${env.PIPELINE_BUILD_NUMBER}] Git Config | WORKSPACE_LOCAL: ${env.WORKSPACE_LOCAL}"
+                    sh "ls -ld ${env.WORKSPACE_LOCAL}"
+                    sh "ls -la ${env.WORKSPACE_LOCAL}"
+
+                    // WORKSPACE
+                    echo "[${env.PIPELINE_BUILD_NUMBER}] Git Config | WORKSPACE: ${WORKSPACE}"
+
+                    // Set safe directories
+                    sh "git config --global --add safe.directory ${env.FLUTTER_HOME}"
+                    sh "git config --global --add safe.directory ${WORKSPACE}"
+
+                    // Retrieve the current branch name
+                    def gitBranch=sh(returnStdout: true, script: "git name-rev --name-only HEAD").trim()
+                    def gitCommit=sh(returnStdout: true, script: "git rev-parse HEAD").trim()
+                    def gitURL=sh(returnStdout: true, script: "git config --get remote.origin.url").trim()
+
+                    // Set the branch name to the environment variables
+                    env.GIT_BRANCH=gitBranch
+                    env.GIT_COMMIT=gitCommit
+                    env.GIT_URL=gitURL
+
+                    // Set branch name from env or default if not available
+                    def branchName=getBranchName(gitBranch)
+
+                    // Encode branch name
+                    def encodedBranchName=URLEncoder.encode(branchName, "UTF-8")
+
+                    // Save values back to environment for use in other stages
+                    env.BRANCH_NAME=branchName
+                    env.ENCODED_BRANCH_NAME=encodedBranchName
+
+                    // Branch starts with: 'build_release'
+                    env.IS_ALLOWED_BRANCH=isAllowedBranch(branchName).toString()
+                }
+            }
+        }
+        stage("Flutter Init") {
+            when {
+                expression {
+                    return env.IS_ALLOWED_BRANCH.toBoolean()
+                }
+            }
+            steps {
+                dir('app') {
+                    script {
+                        sh "flutter --version"
+                        sh "java --version"
+                        sh "./tools/flutter_init.sh"
+
+                        // Determine the PUBSPEC_FILE path based on the environment
+                        def pubspecFile = isUnix() ? "pubspec.yaml" : "../pubspec.yaml"
+
+                        // Extract version from pubspec.yaml
+                        def pubspecContent = readFile(pubspecFile)
+                        echo "pubspecContent: ${pubspecContent}"
+
+                        // Regex to extract the version
+                        def mmpVersion = null
+                        def matcher = pubspecContent =~ /(?m)^version:\s*([\d]+\.[\d]+\.[\d]+)/
+                        if (matcher.find()) {
+                            mmpVersion = matcher.group(1)
+                        } else {
+                            error "Failed to extract version from ${pubspecFile}"
+                        }
+
+                        // Construct new version with Jenkins build number
+                        def newVersion = "${mmpVersion}+${env.BUILD_NUMBER}"
+
+                        // Export variables for use in other steps
+                        env.MMP_VERSION = mmpVersion
+                        env.NEW_VERSION = newVersion
+
+                        echo "Extracted MMP_VERSION: ${env.MMP_VERSION}"
+                        echo "Constructed NEW_VERSION: ${env.NEW_VERSION}"
+
+                        // Pass the PUBSPEC_FILE and NEW_VERSION to version_update.sh
+                        sh "./tools/version_update.sh ${pubspecFile} ${newVersion}"
+                    }
+                }
+            }
+        }
+        stage("Validate Formatting") {
+            when {
+                expression {
+                    return env.RUN_INIT.toBoolean()
+                }
+            }
+            steps {
+                dir('app') {
+                    script {
+                        sh "dart format --set-exit-if-changed --line-length 100 ."
+                        echo "[$env.PIPELINE_BUILD_NUMBER] Stage: 'Validate Formatting' - Done"
+                    }
+                }
+            }
+        }
+        stage("Analyze") {
+            when {
+                expression {
+                    return env.RUN_INIT.toBoolean()
+                }
+            }
+            steps {
+                dir('app') {
+                    sh "./tools/flutter_analyze.sh"
+                }
+            }
+        }
+        // stage("Validate Code Coverage") {
+        //     steps {
+        //         sh "./tools/validate_coverage.sh"
+        //     }
+        // }
+        stage("Build and Deploy Android") {
+            when {
+                expression {
+                    return env.RUN_ANDROID.toBoolean() && env.IS_ALLOWED_BRANCH.toBoolean()
+                }
+            }
+            steps {
+                dir('app') {
+                    // Copy Keystore file into work directory
+                    withCredentials([file(credentialsId: 'ANDROID_KEYSTORE', variable: 'ANDROID_KEYSTORE_PATH')]) {
+                        sh '''
+                            # Copy the keystore to the android/app directory
+                            cp ${ANDROID_KEYSTORE_PATH} ./android/app/key.jks
+
+                            # Create the key.properties file dynamically
+                            cat <<EOF > android/key.properties
+                            storeFile=key.jks
+                            storePassword=${ANDROID_STORE_PASSWORD}
+                            keyAlias=${ANDROID_KEY_ALIAS}
+                            keyPassword=${ANDROID_KEY_PASSWORD}
+                            EOF
+                        '''
+                    }
+                    script {
+                        echo "MMP_VERSION: ${env.MMP_VERSION}"
+                        echo "NEW_VERSION: ${env.NEW_VERSION}"
+                        sh "./tools/build_android_release.sh"
+                    }
+                }
+            }
+        }
+        stage("Run Jenkins Job: Build and Deploy iOS") {
+            when {
+                expression {
+                    return env.RUN_IOS && env.IS_ALLOWED_BRANCH.toBoolean()
+                }
+            }
+            steps {
+                build job: "my-app-deploy-ios",
+                parameters: [
+                    string(name: 'APP_BUILD_NUMBER', value: env.PIPELINE_BUILD_NUMBER),
+                    string(name: 'MMP_VERSION', value: env.MMP_VERSION),
+                    string(name: 'NEW_VERSION', value: env.NEW_VERSION)
+                ],
+                // When 'propagate' is set to true, the next job will only run
+                // if the current job is successful. If set to false, the next
+                // job will run regardless of the result of the current job.
+                propagate: true,
+                wait: false
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs deleteDirs: true
+        }
+    }
+}
+
+def isAllowedBranch(branchName) {
+    return branchName.startsWith("build_release")
+}
+
+def getBranchName(String branchName) {
+    return branchName.split('/').last() // build_release
+}

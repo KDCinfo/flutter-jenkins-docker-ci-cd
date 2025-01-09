@@ -1,0 +1,123 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  #
+  desc "Deploy ipa to TestFlight"
+  lane :deploy_to_testflight do |options|
+    # pwd
+    # /Users/macuser/Development/jenkins-workspace/workspace/my-app-deploy-ios/app/ios/fastlane
+    sh("pwd")
+
+    # ls -la
+    sh("ls -la")
+
+    # ls -la archive
+    sh("ls -la archive")
+
+    # options[:ipa_path]
+    options_ipa_path = options[:ipa_path]
+    puts "options:"
+    puts "ipa_path: #{options_ipa_path}"
+
+    # APPLE_APPLICATION_ID = credentials('APPLE_APPLICATION_ID')
+    # APP_STORE_CONNECT_ISSUER_ID = credentials('APP_STORE_CONNECT_ISSUER_ID')
+    # APP_STORE_CONNECT_API_KEY = credentials('APP_STORE_CONNECT_API_KEY')
+    # .p8 = fastlane/app_store_connect_api_key.p8
+
+    # Could not find ipa file at path
+    # '~/Development/jenkins-workspace/workspace/my-app-deploy-ios/app/ios/archive/production.ipa'
+    # ipa_path = "build/ios/Release-iphoneos/production.ipa"
+    ipa_path = "fastlane/archive/production.ipa"
+
+    issuer_id = ENV['APP_STORE_CONNECT_ISSUER_ID']
+
+    # Ensure the environment variable is set
+    if ENV['APP_STORE_CONNECT_API_KEY']
+      # Extract the key_id using regex
+      # key_id = ENV['APP_STORE_CONNECT_API_KEY'].match(/AuthKey_(.*)\.p8/)[1]
+      match = ENV['APP_STORE_CONNECT_API_KEY'].match(/AuthKey_(.*)\.p8/)
+      if match
+        key_id = match[1] # Extracted key_id
+        puts "Key ID extracted: #{key_id}"
+      else
+        UI.user_error!("The APP_STORE_CONNECT_API_KEY does not match the expected format (AuthKey_<key_id>.p8).")
+      end
+    else
+      UI.user_error!("The APP_STORE_CONNECT_API_KEY environment variable is not set.")
+    end
+
+    puts "### API Key:"
+    puts "key_id: #{key_id}"
+    puts "issuer_id: #{issuer_id}"
+
+    # key_id: ENV['APPLE_APPLICATION_ID'],
+    api_key = app_store_connect_api_key(
+      key_id: key_id,
+      issuer_id: issuer_id,
+      key_filepath: ENV['APP_STORE_CONNECT_API_KEY']
+    )
+    if api_key
+      puts "### API Key Success ###"
+    else
+      UI.user_error!("The API Key could not be generated.")
+    end
+
+    # BUILD_NAME | "My-App.ipa" | [build_ios_release.sh]
+    build_name = ENV['IPA_NAME'] || "unknown-build-name"
+    # BUILD_NUMBER
+    version_code = ENV['APP_VERSION_CODE'] || "0.0.0+0"
+
+    # [release-notes.txt]
+    # Get notes between the current version and the previous version.
+    # Read the full content of release-notes.txt
+    # Current: app/ios/fastlane/ <- You are here
+    changelograw = File.read("../../release-notes.txt")
+
+    # Define the pattern to match the TBA section
+    # The current version ends with "TBA" and the previous version starts with "# version:".
+    tba_section = changelograw.match(/\(TBA\)(.*?)(?=# version|\z)/m)
+    # Ensure the TBA section is found
+    if tba_section
+      changelogsubject = "# version: #{version_code}"
+      # Extract the content after "(TBA)" up to the next "# version" or end of file
+      changelogcontent = tba_section[1].strip # Remove unnecessary whitespace
+      # combine the subject and content with a carriage return in between
+      changelog = "#{changelogsubject}\n#{changelogcontent}"
+    else
+      # Handle cases where the TBA section or version is not found
+      UI.user_error!("Could not find release notes for version: #{version_code} marked as (TBA) in release-notes.txt.")
+    end
+
+    # Print changelog for debugging
+    puts "### Changelog Subject:"
+    puts changelogsubject
+    puts "### Changelog Content:"
+    puts changelogcontent[1]
+    puts "### Final Changelog:"
+    puts changelog
+    puts "### Build Name: #{build_name}"
+    puts "### Version Code: #{version_code}"
+
+    # Upload to TestFlight
+    upload_to_testflight(
+      ipa: ipa_path,
+      api_key: api_key,
+      changelog: changelog
+    )
+  end
+end

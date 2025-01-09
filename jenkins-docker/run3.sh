@@ -3,7 +3,7 @@
 printf "\n... ... ... begin\n"
 
 # @TODO: Replace this with your Jenkins install key
-SECRET_KEY_FLUTTER_NODE="86c...x...y...z...62a"
+SECRET_KEY_FLUTTER_NODE="00x...x...y...z...00x"
 
 CONTAINER_NAME_BLUEOCEAN="jenkins-blueocean"
 CONTAINER_NAME_FLUTTER="flutter-node"
@@ -24,10 +24,6 @@ docker run --name $CONTAINER_NAME_FLUTTER --detach \
   --volume /Users/macuser/Development/jenkins-workspace:/home/developer/workspace \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   custom-jenkins-inbound-agent
-  # --volume jenkins-agent-data:/home/developer/workspace \
-  # --volume jenkins-agent-data:/home/jenkins \
-  # --volume $(which docker):/usr/bin/docker \
-  # --volume /var/run/docker.sock:/var/run/docker.sock \  # :ro ??
 
 printf "\n... [BEFORE].\n"
 docker exec -it --user jenkins $CONTAINER_NAME_FLUTTER bash -c \
@@ -38,7 +34,6 @@ docker exec -it --user jenkins $CONTAINER_NAME_FLUTTER bash -c \
   sudo chown root:docker /var/run/docker.sock && \
   ls -la /var/run/docker.sock && \
   ls -la /home/developer/workspace"
-  # sudo chown -R jenkins:jenkins /home/developer && \
 printf "\n... [AFTER].\n"
 
 printf "\nJenkins agent has started.\n\n"

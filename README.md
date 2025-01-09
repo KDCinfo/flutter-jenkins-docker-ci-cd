@@ -7,14 +7,20 @@ Please see the following blog post for a visual overview related to this reposit
 
 ## IMPORTANT NOTES
 
-1. When the repository below is cloned, a global search and replace should be done in all files for:
+1. The iOS portion of this flow is configured to be run from a Mac, as it uses the Mac host to build an IPA. Ergo, the entire flow is written from a Mac host perspective.
+2. When the repository below is cloned, a global search and replace should be done in all files for:
   - 'macuser' => 'yourmacusername'
+  - 'My-App' => 'Your-App-Name'
   - 'my-app' => 'your-app-name'
+  - 'MY_APP' => 'YOUR_APP_NAME'
+  - 'my_app' => 'your_app_name'
   - 'myapp' => 'yourappname'
-2. As with anything taken from the web, it should be a common practice to **go through each and every file within the repository**.
+  - 'com.mydomain.myapp' => Your app's package name
+3. Your app in git should have a branch named 'build_release', which will be the branch used by Jenkins.
+4. As with anything taken from the web, it should be a common practice to **go through each and every file within the repository**.
   - This is crucial not only to have an understanding of what you will be running, but in the case anything was missed that may require additional configuration. Missing steps are typically things done during the initialization phase that were forgotten some 300 builds later.
-3. If things do not work, examine closely things like permissions (`chmod +x script.sh`), capitalization, and hyphens vs. underscores.
-4. For further clarification or trouble spots, please visit the Jenkins documentation provided at the bottom of this readme.
+5. If things do not work, examine closely things like permissions (`chmod +x script.sh`), capitalization, and hyphens vs. underscores.
+6. For further clarification or trouble spots, please visit the Jenkins documentation provided at the bottom of this readme.
 
 
 ## STEP 1 | PREREQUISITES: Cloning and Folder Structure

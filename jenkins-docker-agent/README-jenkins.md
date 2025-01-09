@@ -80,13 +80,13 @@ User w pass | jenkinsmacdockertoken | macuser/****** (jenkinsmacdockertoken) - G
 Secret FILE | ANDROID_KEYSTORE | key.jks (Signing key file for Android)
 Secret text | ANDROID_STORE_PASSWORD | Android Deployment
 Secret text | ANDROID_KEY_PASSWORD | Android password for key
-Secret FILE | GOOGLE_PLAY_JSON_TOKEN_MY_APP | gcloud-my-app-16---9c.json (Json token for fastlane deployment to Play Store.)
+Secret FILE | GOOGLE_PLAY_JSON_TOKEN_MY_APP | gcloud-my-app-00---0x.json (Json token for fastlane deployment to Play Store.)
 
 Secret text | APPLE_APPLICATION_CREDENTIALS | Email: my@email.com
 Secret text | APPLE_APPLICATION_ID | App Store Connect Team ID
-Secret FILE | APP_STORE_CONNECT_API_KEY | AuthKey_00000XX0XX.p8 (App Store Connect API Key)
+Secret FILE | APP_STORE_CONNECT_API_KEY | AuthKey_00000xx0xx.p8 (App Store Connect API Key)
 Secret text | KEYCHAIN_PASSWORD | Local Mac
-Secret text | APP_STORE_CONNECT_ISSUER_ID | Issuer ID: 75a...-c708-...-...-...5b3 (from app store connect > Users > Integrations -> Team Keys)
+Secret text | APP_STORE_CONNECT_ISSUER_ID | Issuer ID: 00x...-x000-...-...-...0x0 (from app store connect > Users > Integrations -> Team Keys)
 ```
 
 

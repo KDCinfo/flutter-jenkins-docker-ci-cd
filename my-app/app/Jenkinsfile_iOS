@@ -1,0 +1,101 @@
+#!groovy
+
+pipeline {
+    agent {
+        label "machost"
+    }
+    parameters {
+        string(
+            name: 'APP_BUILD_NUMBER',
+            defaultValue: '0',
+            description: 'Build Number of Parent Pipeline'
+        )
+        string(
+            name: 'MMP_VERSION',
+            defaultValue: '0.0.0',
+            description: 'Major.Minor.Patch Version'
+        )
+        string(
+            name: 'NEW_VERSION',
+            defaultValue: '0.0.0+0',
+            description: 'Major.Minor.Patch+Build Version'
+        )
+    }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        timestamps()
+    }
+    environment {
+        PIPELINE_BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        APP_BUILD_NUMBER = "${params.APP_BUILD_NUMBER}"
+        MMP_VERSION = "${params.MMP_VERSION}"
+        NEW_VERSION = "${params.NEW_VERSION}"
+
+        APPLE_APPLICATION_ID = credentials('APPLE_APPLICATION_ID')
+        APP_STORE_CONNECT_ISSUER_ID = credentials('APP_STORE_CONNECT_ISSUER_ID')
+        APP_STORE_CONNECT_API_KEY = credentials('APP_STORE_CONNECT_API_KEY')
+    }
+    stages {
+        stage('Git Config') {
+            steps {
+                script {
+                    echo "whoami:"
+                    sh "whoami"
+                    echo "pwd:"
+                    sh "pwd"
+                    echo "ls -la:"
+                    sh "ls -la"
+                    echo "[${env.PIPELINE_BUILD_NUMBER}] Git Config"
+
+                    sh '''
+                        echo "groups:"
+                        groups
+                    '''
+
+                    // Retrieve the current branch name
+                    def gitBranch=sh(returnStdout: true, script: "git name-rev --name-only HEAD").trim()
+
+                    // Set branch name from env or default if not available
+                    def branchName=getBranchName(gitBranch)
+                    echo "Branch Name: ${branchName}"
+                    // Encode branch name
+                    def encodedBranchName=URLEncoder.encode(branchName, "UTF-8")
+                    echo "Encoded Branch Name: ${encodedBranchName}"
+
+                    // Save values back to environment for use in other stages
+                    env.BRANCH_NAME=branchName
+                    env.ENCODED_BRANCH_NAME=encodedBranchName
+                    env.IS_ALLOWED_BRANCH=isAllowedBranch(branchName).toString()
+                }
+            }
+        }
+        stage ('Build iOS (Release)') {
+            steps {
+                dir('app') {
+                    script {
+                        sh "./tools/init_environment_ios.sh"
+                        sh "./tools/build_ios_release.sh"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'ios/fastlane/archive/**', allowEmptyArchive: true
+            cleanWs disableDeferredWipeout: true, deleteDirs: true
+        }
+    }
+}
+
+def isAllowedBranch(branchName) {
+    return branchName.startsWith("build_release")
+}
+
+def getAppBuildNumber() {
+    return env.BUILD_NUMBER
+}
+
+def getBranchName(String branchName) {
+    return branchName.split('/').last() // build_release
+}

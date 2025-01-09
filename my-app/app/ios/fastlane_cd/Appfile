@@ -1,0 +1,19 @@
+# @TODO: Update the package_name to your app's package name.
+app_identifier("com.mydomain.myapp")
+
+# Path to the API key file
+# App Store Connect API Key | Secret file | AuthKey_000...0xx.p8
+# json_key_path("./testflight_app_store_connect_api_key.p8")
+# json_key_path("./ios/fastlane/app_store_connect_api_key.p8")
+# json_key_path(ENV['APP_STORE_CONNECT_API_KEY'])
+
+# Your Apple Developer Team ID (visible in App Store Connect)
+# App Store Connect Team ID | Secret text
+# team_id(ENV['APPLE_APPLICATION_ID'])
+
+# apple_id(ENV['APPLE_APPLICATION_CREDENTIALS']) # Your Apple Developer Portal username
+# itc_team_id(ENV['APPLE_APPLICATION_ID']) # App Store Connect Team ID
+# team_id("00x0x0xx0x") # Developer Portal Team ID
+
+# For more information about the Appfile, see:
+#     https://docs.fastlane.tools/advanced/#appfile

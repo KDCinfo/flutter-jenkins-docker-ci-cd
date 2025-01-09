@@ -31,7 +31,7 @@ fi
 ### SCRIPT CONFIG
 #
 # @TODO: Replace this with your Jenkins install key
-SECRET_KEY_FLUTTER_NODE="86c...x...y...z...62a"
+SECRET_KEY_FLUTTER_NODE="00x...x...y...z...00x"
 
 CONTAINER_NAME_JENKINS="jenkins-docker"
 CONTAINER_NAME_BLUEOCEAN="jenkins-blueocean"
@@ -139,15 +139,8 @@ else
     JENKINS_WORKSPACE_PATH="/Users/macuser/Development/jenkins-workspace"
     mkdir -p $JENKINS_WORKSPACE_PATH && \
       chmod -R 775 $JENKINS_WORKSPACE_PATH
-    #   chgrp -R docker /Users/macuser/Development/jenkins-workspace
-    # RUN mkdir -p /home/developer/workspace && chown -R developer:developer /home/developer/workspace
 
     printf "\n... building agent image '$CONTAINER_NAME_FLUTTER'."
-    # docker buildx build \
-    #   -f DockerfileAgent \
-    #   -t custom-jenkins-inbound-agent .
-    #   --build-arg HOST_UID=$(id -u macuser) \
-    #   --build-arg HOST_GID=$(id -g macuser) \
     docker buildx build \
       -f DockerfileAgent \
       -t custom-jenkins-inbound-agent .
@@ -163,14 +156,6 @@ else
       --volume /Users/macuser/Development/jenkins-workspace:/home/developer/workspace \
       --volume /var/run/docker.sock:/var/run/docker.sock \
       custom-jenkins-inbound-agent
-      # --user root \
-      # --volume jenkins-agent-data:/home/developer/workspace \
-      # --volume jenkins-agent-data:/home/jenkins \
-      # --volume $(which docker):/usr/bin/docker \
-      # --volume /var/run/docker.sock:/var/run/docker.sock \  # :ro ??
-      #
-      # jenkins/inbound-agent bash -c "usermod -aG docker jenkins && su jenkins"
-      # jenkins/inbound-agent
 
     # docker.sock => Allow Docker to run in agent nodes.
     #
