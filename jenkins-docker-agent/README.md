@@ -53,7 +53,7 @@ They should be, but I have not double checked that these are the same as what's 
 
 ## PART 1: Set up Jenkins: Pipelines, Nodes, and Credentials
 
-See the 'README-jenkins.md' file for instructions on creating the pipelines, as well as setting up nodes and creating credentials.
+See the '[README-jenkins.md](README-jenkins.md)' file for instructions on creating the pipelines, as well as setting up nodes and creating credentials.
 
 
 ## PART 2:
@@ -97,7 +97,7 @@ Side note: This script could be added to the tail end of `runj.sh` in the `jenki
 
 Once the Jenkins Pipelines and primary node and credentials have been configured, we can then create the Mac host agent.
 
-Creation of the 'jenkins-workspace` folder is discussed in the root 'dev-mac' readme file.
+Creation of the 'jenkins-workspace` folder is discussed in the root 'dev-mac' [README.md](../README.md) file.
 
 > `% ls -la ~/Development/jenkins-workspace`
 > drwxrwxr-x@ 8 macuser  docker   256 Jan  2 16:07 .
@@ -142,7 +142,7 @@ Once you save your secret in the `keys` folder, then run the `curl` command to d
 
 ## PART 5: Set up 'my-app'
 
-- Refer to the 'README.md' in the '/my-app' directory for adding 'tools' and 'fastlane' folders.
+- Refer to the '[README.md](../my-app/README.md)' in the '/my-app' directory for adding 'tools' and 'fastlane' folders.
 
 
 ## PART 6: Run Through the Flow

@@ -24,4 +24,4 @@ cp -R ../fastlane_cd/* .
 
 - Step 2: Replace this entire file with your own app's readme.
 
-- Step 3: Return to [jenkins-docker-agent/README.md] | Part 6
+- Step 3: Return to [jenkins-docker-agent/README.md](../jenkins-docker-agent/README.md) | Part 6

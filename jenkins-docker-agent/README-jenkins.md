@@ -67,7 +67,7 @@ Two Jenkins Pipelines will need to be created.
   - Availability: Bring this agent online when in demand, and take offline when idle
     - In demand delay: 0
     - Idle delay: 5
-3. `mac-host` | We'll create the 3rd (final) agent node back in the 'jenkins-docker-agent/README.md' file.
+3. `mac-host` | We'll create the 3rd (final) agent node back in the '[jenkins-docker-agent/README.md](README.md)' file.
 
 
 ## Credentials
