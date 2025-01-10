@@ -64,76 +64,125 @@
     },
     {
         "id": 10,
-        "clumpName": "Increase the current version in `runf.sh`.",
-        "clumpCode": "> CURRENT_VERSION=\"1.0.1\"",
+        "clumpName": "1. Update the `runf.sh` file with your own Docker Hub info (i.e. `macuser`).",
+        "clumpCode": "- `DOCKER_HUB_USERNAME=\"macuser\"`",
         "column": -1,
         "linkedClumpID": 9
     },
     {
         "id": 11,
-        "clumpName": "Update the image file: `DockerfileFlutter`",
-        "clumpCode": "",
+        "clumpName": "2. Increase the current version in `runf.sh`.",
+        "clumpCode": "- `CURRENT_VERSION=\"1.0.1\"`",
         "column": 2,
         "linkedClumpID": -1
     },
     {
         "id": 12,
-        "clumpName": "Run the command that fits:",
-        "clumpCode": "This will build the image with the Flutter environment.\n\nThe final image can be stored in a private repo on Docker Hub.\n\n> CLI: ./runf.sh  # Build current version\n> CLI: ./runf.sh push  # Build and push current version\n> CLI: ./runf.sh 1.0.1  # Build a previous version (will replace latest)\n> CLI: ./runf.sh 1.0.0 push  # Build and push a previous version (will replace latest)",
-        "column": 2,
-        "linkedClumpID": -1
-    },
-    {
-        "id": 13,
-        "clumpName": "Start Jenkins Agent on Mac host (for iOS builds)",
-        "clumpCode": "When building to iOS, an IPA must be created in a Mac-based environment,\n  for which we can use our host Mac by giving it its own agent.\n\nThis does not mean Jenkins needs to be installed on the host Mac\n  (which is what the Jenkins Docker containers are for) &mdash; the agent is just a component or library service.\n\nNote though: Xcode, Flutter and fastlane will need to be installed and up to date on the host Mac.",
-        "column": 1,
-        "linkedClumpID": -1
-    },
-    {
-        "id": 14,
-        "clumpName": "CLI: Open a new terminal window",
-        "clumpCode": "Although the host Mac agent can be set to run as a background task,\n  I keep it running so I can monitor any issues.",
-        "column": -1,
-        "linkedClumpID": 13
-    },
-    {
-        "id": 15,
-        "clumpName": "CLI: cd ~/Development/projects/src/dev-mac/jenkins-docker-agent/",
-        "clumpCode": "The host Mac agent is run from a sibling 'jenkins-docker' folder.",
-        "column": 2,
-        "linkedClumpID": -1
-    },
-    {
-        "id": 16,
-        "clumpName": "CLI: ./runa.sh",
+        "clumpName": "3. Update the image file: `DockerfileFlutter`",
         "clumpCode": "",
         "column": 2,
         "linkedClumpID": -1
     },
     {
+        "id": 13,
+        "clumpName": "4. Run the command that fits:",
+        "clumpCode": "Any of these will build the image with the Flutter environment.\n\nThe final image can be stored in a private repo on Docker Hub.\n\n> CLI: ./runf.sh  # Build current version\n> CLI: ./runf.sh push  # Build and push current version\n> CLI: ./runf.sh 1.0.1  # Build a previous version (will replace latest)\n> CLI: ./runf.sh 1.0.0 push  # Build and push a previous version (will replace latest)",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 14,
+        "clumpName": "Start Jenkins Agent on Mac host (for iOS builds)",
+        "clumpCode": "When building to iOS, an IPA must be created in a Mac-based environment,\n  for which we can use our host Mac by giving it its own agent.\n\nThis does not mean Jenkins needs to be installed on the host Mac\n  (which is what the Jenkins Docker containers are for) &mdash; the agent is its own service.\n\n> **Notes:**\n1. Xcode, Flutter, and fastlane will need to be\n  installed and up to date on the host Mac.\n2. This 'jenkins-docker-agent' should be started\n  after Jenkins is started, and prior to running an iOS build.\n\nThere are alternatives for building the IPA, but using the Mac as a Jenkins\n  agent was the most pragmatic solution in my case, already having the Mac\n  host set up for Flutter development.\n\nThis script could also likely be added to the tail end of `runj.sh` in the\n  `jenkins-docker` sibling folder, but I didn't want to deal with subshells,\n  and running this command in its own terminal also helps to keep it distinct\n  from the other three primary Jenkins Docker containers.",
+        "column": 1,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 15,
+        "clumpName": "### Initial MacOS Agent Setup",
+        "clumpCode": "Once the Jenkins pipelines, primary node, and credentials have\n  been configured, we can then create the Mac host agent.",
+        "column": -1,
+        "linkedClumpID": 14
+    },
+    {
+        "id": 16,
+        "clumpName": "Creation of the 'jenkins-workspace` Folder",
+        "clumpCode": "Creation of the 'jenkins-workspace` folder is discussed in the root 'dev-mac' [README.md](../README.md) file.\n\n> `% ls -la ~/Development/jenkins-workspace`\n> drwxrwxr-x@ 8 macuser  docker   256 Jan  2 16:07 .\n",
+        "column": -1,
+        "linkedClumpID": 15
+    },
+    {
         "id": 17,
+        "clumpName": "### In Jenkins",
+        "clumpCode": "1. Visit: http://localhost:8080/manage/computer/new\n\n```\n  Name:            mac-host\n  Type:            Permanent Agent\n\n  Desc:            Local Mac for iOS builds.\n  Remote root dir: /Users/macuser/Development/jenkins-workspace\n  Labels:          [machost]\n  Usage:           Only build jobs with label expressions matching this node\n  Launch method:   Launch agent by connecting it to the controller\n  Availability:    Keep this agent online as much as possible\n```\n\n**When you save**, it will show a page **with a secret**, and\n  a way to save the secret to a file. It is recommended to\n  save your secret as a 'secretfile' in your 'keys' path.\n\n> `echo 3fe3....6072 > ../../keys/secretfile`\n> #     ^^^ Secret     ^^^ Relative path from this readme\n> cat ~/Development/projects/src/keys/secretfile\n\n**Note:** A silent error was thrown when the 'secretfile' did not have a\n  carriage return at the end. If creating the 'secretfile' from \n  the command line, you may want to edit it and add an empty line.",
+        "column": 3,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 18,
+        "clumpName": "### In a Terminal",
+        "clumpCode": "2. Download the 'agent.jar' file.\n\n> % cd ~/Development/projects/src/dev-mac/jenkins-docker-agent\n> % curl -sO http://localhost:8080/jnlpJars/agent.jar\n\nOnce you save your secret in the `keys` folder, then run the `curl`\n  command to download the 'agent.jar', running the `runa.sh` script\n  will use those and be able to start up the agent node.",
+        "column": 3,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 19,
+        "clumpName": "### Additional Jenkins Agent directions:",
+        "clumpCode": "- https://www.jenkins.io/blog/2022/12/27/run-jenkins-agent-as-a-service/",
+        "column": 3,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 20,
+        "clumpName": "### Routine MacOS Agent Startups",
+        "clumpCode": "",
+        "column": 2,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 21,
+        "clumpName": "CLI: Open a new terminal window",
+        "clumpCode": "Although the host Mac agent can be set to run as a background task,\n  I keep it running so I can monitor any issues.",
+        "column": -1,
+        "linkedClumpID": 20
+    },
+    {
+        "id": 22,
+        "clumpName": "CLI: cd ~/Development/projects/src/dev-mac/jenkins-docker-agent/",
+        "clumpCode": "The host Mac agent is run from a sibling 'jenkins-docker' folder.",
+        "column": 3,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 23,
+        "clumpName": "CLI: ./runa.sh",
+        "clumpCode": "",
+        "column": 3,
+        "linkedClumpID": -1
+    },
+    {
+        "id": 24,
         "clumpName": "Deploy to stores",
         "clumpCode": "Run a script to:\n- determine if a new app version and release notes are needed,\n- merge the 'main' branch into the 'build_release' branch, then\n- trigger the Jenkins build*.\n\n* If git is set to watch the 'build_release' branch, the build trigger can be removed from the script.",
         "column": 1,
         "linkedClumpID": -1
     },
     {
-        "id": 18,
+        "id": 25,
         "clumpName": "CLI: cd ~/Development/projects/my-app/app/tools/",
         "clumpCode": "All CI/CD shells scripts are stored in each app's own 'tools' directory.",
         "column": -1,
-        "linkedClumpID": 17
+        "linkedClumpID": 24
     },
     {
-        "id": 19,
+        "id": 26,
         "clumpName": "CLI: ./rund.sh",
         "clumpCode": "[run deploy] This script will execute the steps mentioned above.",
         "column": 2,
         "linkedClumpID": -1
     },
     {
-        "id": 20,
+        "id": 27,
         "clumpName": "Monitor Jenkins progress across two pipelines",
         "clumpCode": "If the primary Jenkins pipeline job succeeds, Android will have been deployed\n  and a 2nd Jenkins pipeline will be started to build and deploy iOS.",
         "column": 1,
